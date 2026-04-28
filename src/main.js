@@ -33,7 +33,7 @@ const state = {
   progressTitle: '',
   progressDetail: '',
   error: '',
-  runLabel: '?꾩쭅 遺꾩꽍???ㅽ뻾?섏? ?딆븯?듬땲??',
+  runLabel: '아직 분석을 실행하지 않았습니다.',
 };
 
 app.innerHTML = `
@@ -42,27 +42,28 @@ app.innerHTML = `
     <section class="hero panel">
       <div class="hero-copy">
         <span class="eyebrow">ClaimReady Beta</span>
-        <h1>蹂댄뿕 泥?뎄 以鍮꾨룄? ?덉긽 ?섎졊?≪쓣 媛숈씠 蹂대뒗 ?꾧뎄</h1>
+        <h1>보험 청구 준비도와 예상 수령액을 같이 보는 AI 도구</h1>
         <p class="hero-text">
-          蹂묒썝 ?쒕쪟瑜??щ━硫?以鍮꾨룄? ?꾨씫 ?쒕쪟瑜??뺣━?섍퀬, 蹂댄뿕利앷텒?대굹 ?쎄????④퍡 ?щ━硫?          異붿젙媛믪쓣 湲곕낯 媛?뺤씠 ?꾨땲??<strong>?낅줈?쒗븳 ?쎄? ?댁슜</strong>?쇰줈 ?ㅼ떆 怨꾩궛?⑸땲??
+          병원 서류를 올리면 준비도와 누락 서류를 정리하고, 보험증권이나 약관을 함께 올리면
+          기본 가정이 아닌 <strong>업로드한 약관 내용</strong>으로 예상 수령액을 다시 계산합니다.
         </p>
       </div>
       <div class="hero-stat">
         <div class="stat">
-          <span class="stat-label">?섎즺 ?쒕쪟</span>
-          <strong>?곸닔利?/ ?몃??댁뿭??/ 吏꾨떒??/strong>
+          <span class="stat-label">의료 서류</span>
+          <strong>영수증 / 세부내역서 / 처방전 / 진단서</strong>
         </div>
         <div class="stat">
-          <span class="stat-label">?쎄? ?낅젰</span>
-          <strong>蹂댄뿕利앷텒 / ?쎄? PDF / ?대?吏</strong>
+          <span class="stat-label">보험 자료</span>
+          <strong>보험증권 / 약관 PDF / 이미지</strong>
         </div>
         <div class="stat">
-          <span class="stat-label">異쒕젰</span>
-          <strong>以鍮꾨룄 + 吏湲?異붿젙 + ???媛?대뱶</strong>
+          <span class="stat-label">출력</span>
+          <strong>준비도 + 지급 추정 + 대응 가이드</strong>
         </div>
         <div class="stat">
-          <span class="stat-label">湲곗?</span>
-          <strong>?쇱꽦?붿옱 ?덈궡 + ?낅줈???쎄? 異붿텧</strong>
+          <span class="stat-label">기준</span>
+          <strong>보험사별 안내 + 업로드 약관 추출</strong>
         </div>
       </div>
     </section>
@@ -72,34 +73,34 @@ app.innerHTML = `
         <section class="panel control-panel">
           <div class="section-head">
             <div>
-              <span class="section-kicker">1. ?섎즺 ?쒕쪟</span>
-              <h2>泥?뎄 ?쒕쪟 ?щ━湲?/h2>
+              <span class="section-kicker">1. 의료 서류</span>
+              <h2>청구 서류 업로드</h2>
             </div>
-            <span class="support-chip">以鍮꾨룄 遺꾩꽍??/span>
+            <span class="support-chip">준비도 분석</span>
           </div>
 
           <label class="dropzone" id="dropzone" for="file-input">
             <input id="file-input" type="file" multiple accept="image/*,.pdf,.txt" />
             <div class="dropzone-copy">
-              <strong>?곸닔利? ?몃??댁뿭?? 泥섎갑?? 吏꾨떒???깆쓣 ?щ━?몄슂</strong>
-              <p>?대?吏, PDF, TXT瑜?吏?먰빀?덈떎. OCR?대굹 PDF ?띿뒪??異붿텧 ???쒕쪟 ?좏삎怨??꾨씫 ??ぉ???뺣━?⑸땲??</p>
+              <strong>영수증, 세부내역서, 처방전, 진단서 등을 올리세요</strong>
+              <p>이미지, PDF, TXT를 지원합니다. OCR 또는 PDF 텍스트 추출 후 문서 유형과 누락 항목을 정리합니다.</p>
             </div>
           </label>
 
           <div class="cta-row">
-            <button class="button button-strong" type="button" data-demo-case="outpatient-gap">?섑뵆 耳?댁뒪 A</button>
-            <button class="button" type="button" data-demo-case="inpatient-ready">?섑뵆 耳?댁뒪 B</button>
-            <button class="button button-muted" type="button" id="clear-button">?꾩껜 珥덇린??/button>
+            <button class="button button-strong" type="button" data-demo-case="outpatient-gap">샘플 케이스 A</button>
+            <button class="button" type="button" data-demo-case="inpatient-ready">샘플 케이스 B</button>
+            <button class="button button-muted" type="button" id="clear-button">전체 초기화</button>
           </div>
 
           <div class="helper-grid">
             <article>
-              <strong>?섑뵆 A</strong>
-              <p>?듭썝 移섎즺 ???곸닔利? ?몃??댁뿭?? 泥섎갑?꾩씠 ?덇퀬 ?쎄?源뚯? 媛숈씠 ?곸슜???덉떆?낅땲??</p>
+              <strong>샘플 A</strong>
+              <p>통원 치료 후 영수증, 세부내역서, 처방전이 있고 약관까지 같이 적용한 예시입니다.</p>
             </article>
             <article>
-              <strong>?섑뵆 B</strong>
-              <p>?낆썝 泥?뎄???꾩슂??二쇱슂 ?쒕쪟媛 嫄곗쓽 媛뽰떠吏??곹깭瑜?蹂댁뿬以띾땲??</p>
+              <strong>샘플 B</strong>
+              <p>입원 청구에 필요한 주요 서류가 거의 갖춰진 상태를 보여줍니다.</p>
             </article>
           </div>
         </section>
@@ -107,34 +108,34 @@ app.innerHTML = `
         <section class="panel policy-panel">
           <div class="section-head">
             <div>
-              <span class="section-kicker">2. 蹂댄뿕利앷텒 / ?쎄?</span>
-              <h2>蹂댁옣議곌굔 ?먮룞 異붿텧</h2>
+              <span class="section-kicker">2. 보험증권 / 약관</span>
+              <h2>보장조건 자동 추출</h2>
             </div>
-            <span class="support-chip">?덉긽 ?섎졊??蹂댁젙??/span>
+            <span class="support-chip">예상 수령액 보정</span>
           </div>
 
           <label class="dropzone dropzone-compact" id="policy-dropzone" for="policy-file-input">
             <input id="policy-file-input" type="file" multiple accept="image/*,.pdf,.txt" />
             <div class="dropzone-copy">
-              <strong>蹂댄뿕利앷텒, ?곹뭹?ㅻ챸?? ?쎄? PDF瑜??щ━?몄슂</strong>
-              <p>蹂댁긽鍮꾩쑉, ?듭썝 怨듭젣, 泥섎갑 怨듭젣, ?곌컙 ?쒕룄, 吏꾨떒鍮? ?섏닠鍮꾨? ?먮룞 異붿텧??異붿젙?앹뿉 諛섏쁺?⑸땲??</p>
+              <strong>보험증권, 상품설명서, 약관 PDF를 올리세요</strong>
+              <p>보상비율, 통원 공제, 처방 공제, 연간 한도, 진단비, 수술비를 자동 추출해 추정식에 반영합니다.</p>
             </div>
           </label>
 
           <div class="cta-row">
-            <button class="button" type="button" id="policy-reset-button">?쎄?媛믩쭔 珥덇린??/button>
+            <button class="button" type="button" id="policy-reset-button">약관값만 초기화</button>
           </div>
 
           <div class="policy-summary-card" id="policy-summary-card">
             <div class="policy-summary-head">
               <div>
-                <span class="policy-kicker">?꾩옱 湲곗?</span>
-                <h3 id="policy-source-title">湲곕낯 媛?뺢컪 ?ъ슜 以?/h3>
+                <span class="policy-kicker">현재 기준</span>
+                <h3 id="policy-source-title">기본 가정값 사용 중</h3>
               </div>
               <span class="policy-source-pill" id="policy-source-pill">manual</span>
             </div>
             <p class="policy-source-note" id="policy-source-note">
-              ?꾩쭅 蹂댄뿕利앷텒?대굹 ?쎄????щ━吏 ?딆븯?듬땲?? ?꾨옒 ?낅젰移몄? 湲곕낯 媛?뺢컪?낅땲??
+              아직 보험증권이나 약관을 올리지 않았습니다. 아래 입력치는 기본 가정값입니다.
             </p>
             <div class="policy-summary-grid" id="policy-summary-grid"></div>
             <ul class="plain-list subtle" id="policy-summary-notes"></ul>
@@ -142,14 +143,14 @@ app.innerHTML = `
 
           <div class="section-head compact section-head-inline">
             <div>
-              <span class="section-kicker">3. ?섎룞 蹂댁젙</span>
-              <h2>?먮룞 異붿텧媛??섏젙</h2>
+              <span class="section-kicker">3. 수동 보정</span>
+              <h2>자동 추출값 수정</h2>
             </div>
           </div>
 
           <div class="policy-grid">
             <label class="field">
-              <span>?ㅼ넀 蹂댁긽鍮꾩쑉</span>
+              <span>실손 보상비율</span>
               <select id="coverage-rate">
                 <option value="0.9">90%</option>
                 <option value="0.8">80%</option>
@@ -157,63 +158,63 @@ app.innerHTML = `
               </select>
             </label>
             <label class="field">
-              <span>?듭썝 怨듭젣</span>
+              <span>통원 공제액</span>
               <input id="outpatient-deductible" type="number" min="0" step="1000" />
             </label>
             <label class="field">
-              <span>泥섎갑 議곗젣 怨듭젣</span>
+              <span>처방 조제 공제액</span>
               <input id="prescription-deductible" type="number" min="0" step="1000" />
             </label>
             <label class="field">
-              <span>?낆썝 怨듭젣</span>
+              <span>입원 공제액</span>
               <input id="inpatient-deductible" type="number" min="0" step="1000" />
             </label>
             <label class="field">
-              <span>?곌컙 ?쒕룄</span>
+              <span>연간 한도</span>
               <input id="annual-limit" type="number" min="0" step="10000" />
             </label>
             <label class="field">
-              <span>吏꾨떒鍮??뱀빟</span>
+              <span>진단비 특약</span>
               <input id="diagnosis-benefit" type="number" min="0" step="10000" />
             </label>
             <label class="field">
-              <span>?섏닠鍮??뱀빟</span>
+              <span>수술비 특약</span>
               <input id="surgery-benefit" type="number" min="0" step="10000" />
             </label>
             <label class="field">
-              <span>?대? 吏湲됰컺? 湲덉븸</span>
+              <span>이미 지급받은 금액</span>
               <input id="already-paid" type="number" min="0" step="10000" />
             </label>
           </div>
           <p class="field-help" id="policy-field-help">
-            ?쎄? ?낅줈???꾩뿉??湲곕낯 媛?뺢컪???ъ슜?⑸땲?? ?쎄????щ━硫??먮룞 異붿텧媛믪쑝濡?諛붾뚭퀬, 洹????낅젰移몄뿉???ㅼ떆 ??뼱?????덉뒿?덈떎.
+            약관 업로드 전에는 기본 가정값을 사용합니다. 약관을 올리면 자동 추출값으로 바뀌고, 이 입력칸에서 다시 덮어쓸 수 있습니다.
           </p>
 
           <div class="section-head compact section-head-inline">
             <div>
-              <span class="section-kicker">4. ?쎄? 臾몄꽌</span>
-              <h2>異붿텧???ъ슜??臾몄꽌</h2>
+              <span class="section-kicker">4. 약관 문서</span>
+              <h2>추출에 사용한 문서</h2>
             </div>
           </div>
           <div id="policy-docs-list" class="docs-list empty-state">
-            ?꾩쭅 ?쎄? 臾몄꽌媛 ?놁뒿?덈떎.
+            아직 약관 문서가 없습니다.
           </div>
         </section>
 
         <section class="panel response-panel">
           <div class="section-head">
             <div>
-              <span class="section-kicker">3. 蹂댄뿕???뚯떊</span>
-              <h2>異붽??쒕쪟 ?붿껌??/ 遺吏湲??듬낫??/h2>
+              <span class="section-kicker">5. 보험사 회신</span>
+              <h2>추가서류 요청 / 부지급 통보</h2>
             </div>
-            <span class="support-chip">遺꾩웳 ??묒슜</span>
+            <span class="support-chip">분쟁 대응용</span>
           </div>
 
           <label class="dropzone dropzone-compact" id="response-dropzone" for="response-file-input">
             <input id="response-file-input" type="file" multiple accept="image/*,.pdf,.txt" />
             <div class="dropzone-copy">
-              <strong>蹂댄뿕??臾몄옄, 異붽??쒕쪟 ?붿껌?? 遺吏湲??덈궡臾몄쓣 ?щ━?몄슂</strong>
-              <p>蹂댄뿕?ш? ?ㅼ젣濡??≪? ?곸젏???쎌뼱??臾댁뾿????以鍮꾪빐???섎뒗吏 ?곕줈 ?뺣━?⑸땲??</p>
+              <strong>보험사 문자, 추가서류 요청서, 부지급 안내문을 올리세요</strong>
+              <p>보험사가 실제로 잡은 쟁점을 읽어 무엇을 더 준비해야 하는지 따로 정리합니다.</p>
             </div>
           </label>
 
@@ -242,13 +243,13 @@ app.innerHTML = `
           <div class="policy-summary-card">
             <div class="policy-summary-head">
               <div>
-                <span class="policy-kicker">?뚯떊 遺꾩꽍</span>
-                <h3 id="response-source-title">?뚯떊 臾몄꽌 ?놁쓬</h3>
+                <span class="policy-kicker">회신 분석</span>
+                <h3 id="response-source-title">회신 문서 없음</h3>
               </div>
               <span class="policy-source-pill" id="response-source-pill">none</span>
             </div>
             <p class="policy-source-note" id="response-summary-note">
-              ?꾩쭅 蹂댄뿕???뚯떊 臾몄꽌瑜??щ━吏 ?딆븯?듬땲??
+              아직 보험사 회신 문서를 올리지 않았습니다.
             </p>
             <div class="policy-summary-grid" id="response-summary-grid"></div>
             <ul class="plain-list subtle" id="response-summary-actions"></ul>
@@ -256,20 +257,20 @@ app.innerHTML = `
 
           <div class="section-head compact section-head-inline">
             <div>
-              <span class="section-kicker">4. ?뚯떊 臾몄꽌</span>
-              <h2>異붿텧???ъ슜???뚯떊</h2>
+              <span class="section-kicker">6. 회신 문서</span>
+              <h2>추출에 사용한 회신</h2>
             </div>
           </div>
           <div id="response-docs-list" class="docs-list empty-state">
-            ?꾩쭅 ?뚯떊 臾몄꽌媛 ?놁뒿?덈떎.
+            아직 회신 문서가 없습니다.
           </div>
         </section>
 
         <section class="panel progress-panel" id="progress-panel" hidden>
           <div class="section-head compact">
             <div>
-              <span class="section-kicker">泥섎━ 以?/span>
-              <h2 id="progress-title">臾몄꽌瑜?遺꾩꽍?섎뒗 以묒엯?덈떎.</h2>
+              <span class="section-kicker">처리 중</span>
+              <h2 id="progress-title">문서를 분석하는 중입니다.</h2>
             </div>
           </div>
           <p id="progress-detail" class="muted"></p>
@@ -278,13 +279,13 @@ app.innerHTML = `
         <section class="panel docs-panel">
           <div class="section-head">
             <div>
-              <span class="section-kicker">5. ?섎즺 臾몄꽌 臾띠쓬</span>
-              <h2>?낅줈?쒗븳 ?쒕쪟</h2>
+              <span class="section-kicker">7. 완료 문서 묶음</span>
+              <h2>업로드한 서류</h2>
             </div>
-            <span class="muted" id="run-label">?꾩쭅 遺꾩꽍???ㅽ뻾?섏? ?딆븯?듬땲??</span>
+            <span class="muted" id="run-label">아직 분석을 실행하지 않았습니다.</span>
           </div>
           <div id="docs-list" class="docs-list empty-state">
-            ?꾩쭅 ?섎즺 ?쒕쪟媛 ?놁뒿?덈떎. ?섑뵆 耳?댁뒪瑜??꾨Ⅴ硫?諛붾줈 寃곌낵瑜?蹂????덉뒿?덈떎.
+            아직 의료 서류가 없습니다. 샘플 케이스를 누르면 바로 결과를 볼 수 있습니다.
           </div>
         </section>
       </div>
@@ -293,13 +294,13 @@ app.innerHTML = `
         <section class="panel result-panel">
           <div class="section-head">
             <div>
-              <span class="section-kicker">6. 寃곌낵</span>
-              <h2>泥?뎄 readiness</h2>
+              <span class="section-kicker">8. 결과</span>
+              <h2>청구 readiness</h2>
             </div>
-            <button class="button button-muted" type="button" id="download-button" disabled>由ы룷???ㅼ슫濡쒕뱶</button>
+            <button class="button button-muted" type="button" id="download-button" disabled>리포트 다운로드</button>
           </div>
           <div id="analysis-root" class="analysis-placeholder">
-            以鍮꾨룄 ?먯닔, ?꾨씫 ?쒕쪟, ?덉긽 ?섎졊?? 遺吏湲????媛?대뱶瑜??ш린??蹂댁뿬以띾땲??
+            준비도 점수, 누락 서류, 예상 수령액, 부지급 대응 가이드를 여기에 보여줍니다.
           </div>
         </section>
       </div>
@@ -399,13 +400,13 @@ document.querySelectorAll('[data-demo-case]').forEach((button) => {
 
 clearButton.addEventListener('click', () => {
   resetAll();
-  state.runLabel = '?꾩껜 ?낅젰媛믪쓣 珥덇린?뷀뻽?듬땲??';
+  state.runLabel = '전체 입력값을 초기화했습니다.';
   render();
 });
 
 policyResetButton.addEventListener('click', () => {
   resetPolicyInputs();
-  state.runLabel = '?쎄? ?먮룞 異붿텧媛믨낵 ?섎룞 蹂댁젙媛믪쓣 珥덇린?뷀뻽?듬땲??';
+  state.runLabel = '약관 자동 추출값과 수동 보정값을 초기화했습니다.';
   rerunAnalysisIfNeeded();
   render();
 });
@@ -491,7 +492,7 @@ function handlePolicyChange() {
   recomputePolicyAssumptions();
 
   if (state.documents.length) {
-    state.runLabel = '?섎룞 蹂댁젙媛믪쓣 諛섏쁺??異붿젙 寃곌낵瑜??ㅼ떆 怨꾩궛?덉뒿?덈떎.';
+    state.runLabel = '수동 보정값을 반영해 추정 결과를 다시 계산했습니다.';
     rerunAnalysisIfNeeded();
   }
 
@@ -551,7 +552,7 @@ function loadDemoCase(caseId) {
     }),
   );
   state.error = '';
-  state.runLabel = `${demoCase.title} ?섑뵆??遺덈윭?붿뒿?덈떎.`;
+  state.runLabel = `${demoCase.title} 샘플을 불러왔습니다.`;
   rerunAnalysisIfNeeded();
   render();
 }
@@ -561,14 +562,14 @@ async function processMedicalFiles(files) {
   state.error = '';
   state.documents = [];
   state.analysis = null;
-  state.runLabel = `${files.length}媛??섎즺 臾몄꽌瑜??낅줈?쒗뻽?듬땲??`;
-  updateProgress('?섎즺 ?쒕쪟瑜?以鍮꾪븯??以묒엯?덈떎.', '泥?OCR ?몄뼱 濡쒕뵫 ??紐?珥???嫄몃┫ ???덉뒿?덈떎.');
+  state.runLabel = `${files.length}개 의료 문서를 업로드했습니다.`;
+  updateProgress('의료 서류를 준비하는 중입니다.', '첫 OCR 언어 로딩 때 몇 초 걸릴 수 있습니다.');
 
   const documents = [];
 
   try {
     for (const [index, file] of files.entries()) {
-      updateProgress(`${index + 1}/${files.length} ${file.name}`, '?섎즺 ?쒕쪟 ?띿뒪?몃? 異붿텧?섎뒗 以묒엯?덈떎.');
+      updateProgress(`${index + 1}/${files.length} ${file.name}`, '의료 서류 텍스트를 추출하는 중입니다.');
 
       const extracted = await extractTextFromFile(file, (message) => {
         updateProgress(`${index + 1}/${files.length} ${file.name}`, message);
@@ -590,7 +591,7 @@ async function processMedicalFiles(files) {
     rerunAnalysisIfNeeded();
   } catch (error) {
     console.error(error);
-    state.error = error instanceof Error ? error.message : '?섎즺 臾몄꽌瑜?泥섎━?섏? 紐삵뻽?듬땲??';
+    state.error = error instanceof Error ? error.message : '의료 문서를 처리하지 못했습니다.';
   } finally {
     state.processing = false;
     render();
@@ -600,13 +601,13 @@ async function processMedicalFiles(files) {
 async function processPolicyFiles(files) {
   state.processing = true;
   state.error = '';
-  updateProgress('蹂댄뿕利앷텒怨??쎄????쎈뒗 以묒엯?덈떎.', '?띿뒪?몃? 異붿텧????蹂댁옣議곌굔 ?꾨낫瑜?李얠뒿?덈떎.');
+  updateProgress('보험증권과 약관을 읽는 중입니다.', '텍스트를 추출한 뒤 보장조건 정보를 찾습니다.');
 
   const policyDocuments = [];
 
   try {
     for (const [index, file] of files.entries()) {
-      updateProgress(`${index + 1}/${files.length} ${file.name}`, '?쎄? 臾몄꽌 ?띿뒪?몃? 異붿텧?섎뒗 以묒엯?덈떎.');
+      updateProgress(`${index + 1}/${files.length} ${file.name}`, '약관 문서 텍스트를 추출하는 중입니다.');
 
       const extracted = await extractTextFromFile(file, (message) => {
         updateProgress(`${index + 1}/${files.length} ${file.name}`, message);
@@ -625,10 +626,10 @@ async function processPolicyFiles(files) {
     }
 
     hydratePolicyDocuments(policyDocuments, true);
-    state.runLabel = `${files.length}媛??쎄? 臾몄꽌?먯꽌 蹂댁옣議곌굔???ㅼ떆 ?쎌뿀?듬땲??`;
+    state.runLabel = `${files.length}개 약관 문서에서 보장조건을 다시 읽었습니다.`;
   } catch (error) {
     console.error(error);
-    state.error = error instanceof Error ? error.message : '?쎄? 臾몄꽌瑜?泥섎━?섏? 紐삵뻽?듬땲??';
+    state.error = error instanceof Error ? error.message : '약관 문서를 처리하지 못했습니다.';
   } finally {
     state.processing = false;
     render();
@@ -638,13 +639,13 @@ async function processPolicyFiles(files) {
 async function processResponseFiles(files) {
   state.processing = true;
   state.error = '';
-  updateProgress('蹂댄뿕???뚯떊 臾몄꽌瑜??쎈뒗 以묒엯?덈떎.', '異붽??쒕쪟 ?붿껌, 遺吏湲??ъ쑀, ?쎄? ?곸젏??李얠뒿?덈떎.');
+  updateProgress('보험사 회신 문서를 읽는 중입니다.', '추가서류 요청, 부지급 사유, 약관 쟁점을 찾습니다.');
 
   const responseDocuments = [];
 
   try {
     for (const [index, file] of files.entries()) {
-      updateProgress(`${index + 1}/${files.length} ${file.name}`, '?뚯떊 臾몄꽌 ?띿뒪?몃? 異붿텧?섎뒗 以묒엯?덈떎.');
+      updateProgress(`${index + 1}/${files.length} ${file.name}`, '회신 문서 텍스트를 추출하는 중입니다.');
 
       const extracted = await extractTextFromFile(file, (message) => {
         updateProgress(`${index + 1}/${files.length} ${file.name}`, message);
@@ -663,10 +664,10 @@ async function processResponseFiles(files) {
     }
 
     hydrateResponseDocuments(responseDocuments);
-    state.runLabel = `${files.length}媛?蹂댄뿕???뚯떊 臾몄꽌?먯꽌 ????ъ씤?몃? ?뺣━?덉뒿?덈떎.`;
+    state.runLabel = `${files.length}개 보험사 회신 문서에서 대응 포인트를 정리했습니다.`;
   } catch (error) {
     console.error(error);
-    state.error = error instanceof Error ? error.message : '蹂댄뿕???뚯떊 臾몄꽌瑜?泥섎━?섏? 紐삵뻽?듬땲??';
+    state.error = error instanceof Error ? error.message : '보험사 회신 문서를 처리하지 못했습니다.';
   } finally {
     state.processing = false;
     render();
@@ -783,7 +784,7 @@ function buildPolicyDocument({ id, name, text, sourceType, previewUrl, pageCount
     sourceType,
     previewUrl,
     pageCount,
-    excerpt: excerpt || '?띿뒪??異붿텧 寃곌낵媛 異⑸텇?섏? ?딆뒿?덈떎.',
+    excerpt: excerpt || '텍스트 추출 결과가 충분하지 않습니다.',
   };
 }
 
@@ -803,7 +804,7 @@ function buildResponseDocument({ id, name, text, sourceType, previewUrl, pageCou
     sourceType,
     previewUrl,
     pageCount,
-    excerpt: excerpt || '?띿뒪??異붿텧 寃곌낵媛 異⑸텇?섏? ?딆뒿?덈떎.',
+    excerpt: excerpt || '텍스트 추출 결과가 충분하지 않습니다.',
   };
 }
 
@@ -836,6 +837,7 @@ function buildManualResponseDocument() {
     isManual: true,
   };
 }
+
 function updateProgress(title, detail) {
   state.progressTitle = title;
   state.progressDetail = detail;
@@ -959,7 +961,7 @@ function renderPolicySummary() {
     : '<li>약관에서 추출한 수치 조건을 기반으로 계산합니다.</li>';
 
   policyFieldHelp.textContent = hasManualOverrides
-    ? '수동 보정값이 우선 적용됩니다. 원래 값으로 되돌리려면 "약관 기반 초기화"를 누르세요.'
+    ? '수동 보정값이 우선 적용됩니다. 원래 값으로 되돌리려면 약관값만 초기화를 누르세요.'
     : '자동 추출값이 맞지 않으면 아래 입력칸에서 직접 수정할 수 있습니다.';
 }
 
@@ -1000,7 +1002,7 @@ function renderResponseSummary() {
             <article class="policy-chip-card">
               <span>쟁점</span>
               <strong>${escapeHtml(item)}</strong>
-              <p>회신 문구에서 포착된 이슈입니다.</p>
+              <p>회신 문구에서 포착한 이슈입니다.</p>
             </article>
           `,
         )
@@ -1020,13 +1022,14 @@ function renderResponseSummary() {
 
   responseSummaryActions.innerHTML = actionItems.length
     ? actionItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-    : '<li>추가 대응 제안이 아직 없습니다.</li>';
+    : '<li>추가 대응 제안은 아직 없습니다.</li>';
 }
 
 function renderMedicalDocumentCard(document) {
+  const warnings = document.warnings || [];
   const amount = document.amount ? `${currencyFormatter.format(document.amount)}원` : '금액 미확인';
-  const issues = document.warnings.length
-    ? `<div class="doc-foot">${document.warnings.map((item) => `<span class="tag warning">${escapeHtml(item)}</span>`).join('')}</div>`
+  const issues = warnings.length
+    ? `<div class="doc-foot">${warnings.map((item) => `<span class="tag warning">${escapeHtml(item)}</span>`).join('')}</div>`
     : '';
 
   return `
@@ -1135,7 +1138,7 @@ function renderResponseAwareDispute() {
     : '<li>즉시 추가 제출해야 할 자료는 아직 명확하지 않습니다.</li>';
   const matchedLines = state.responseSummary.matchedLines.length
     ? state.responseSummary.matchedLines.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-    : '<li>회신 원문에서 직접 매칭된 문장은 아직 없습니다.</li>';
+    : '<li>회신 원문에서 직접 매칭한 문장은 아직 없습니다.</li>';
   const sourceHints = state.responseSummary.sourceHints?.length
     ? state.responseSummary.sourceHints.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
     : '<li>공식 패턴 힌트는 아직 없습니다.</li>';
@@ -1143,7 +1146,7 @@ function renderResponseAwareDispute() {
   return `
     <div class="analysis-grid compact-grid">
       <section class="result-block nested-block">
-        <h4>회신서 핵심 문구</h4>
+        <h4>회신의 핵심 문구</h4>
         <ul class="plain-list">${matchedLines}</ul>
       </section>
       <section class="result-block nested-block">
@@ -1176,10 +1179,10 @@ function renderAnalysis(analysis) {
     : '<li>추정 가정이 없습니다.</li>';
   const estimateBlockers = analysis.estimate.blockers.length
     ? analysis.estimate.blockers.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-    : '<li>현재 입력 기준으로 큰 제한 요인은 보이지 않습니다.</li>';
+    : '<li>현재 입력 기준으로 제한 요인은 보이지 않습니다.</li>';
   const disputeIssues = analysis.disputeGuide.issues.length
     ? analysis.disputeGuide.issues.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-    : '<li>현재 확인된 분쟁 쟁점이 없습니다.</li>';
+    : '<li>현재 확인한 분쟁 쟁점은 없습니다.</li>';
   const disputeEvidence = analysis.disputeGuide.evidencePack.length
     ? analysis.disputeGuide.evidencePack.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
     : '<li>즉시 보강해야 할 증빙은 아직 없습니다.</li>';
@@ -1201,10 +1204,10 @@ function renderAnalysis(analysis) {
     .join('');
   const highlights = analysis.highlights.length
     ? analysis.highlights.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-    : '<li>핵심 관찰 포인트가 없습니다.</li>';
+    : '<li>핵심 관찰 사항이 없습니다.</li>';
   const nextActions = analysis.nextActions.length
     ? analysis.nextActions.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-    : '<li>추가 행동 제안이 없습니다.</li>';
+    : '<li>추가 행동 제안은 없습니다.</li>';
   const missing = analysis.missingDocuments.length
     ? analysis.missingDocuments.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
     : '<li>중요 누락 서류는 없습니다. 최종 제출 양식만 확인하면 됩니다.</li>';
@@ -1214,7 +1217,7 @@ function renderAnalysis(analysis) {
   const responseActions =
     state.responseSummary && state.responseSummary.actions.length
       ? state.responseSummary.actions.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
-      : '<li>추가 회신 대응 액션이 없습니다.</li>';
+      : '<li>추가 회신 대응 액션은 없습니다.</li>';
 
   return `
     <div class="analysis-banner">
@@ -1365,7 +1368,7 @@ function renderExtractionDebugPanel() {
       <div class="debug-head">
         <div>
           <h4>문서 추출 디버그</h4>
-          <p>실제 업로드 서류에서 어떤 값이 잡혔는지, 어디가 비어 있는지 바로 확인합니다.</p>
+          <p>업로드한 서류에서 어떤 값이 잡혔고 어디가 비었는지 확인합니다.</p>
         </div>
         <span class="debug-count">${state.documents.length}건</span>
       </div>
@@ -1380,7 +1383,7 @@ function renderExtractionDebugCard(document) {
   const visitTypeMap = {
     inpatient: '입원',
     outpatient: '통원',
-    unknown: '판별 전',
+    unknown: '유형 미확인',
   };
   const missingFields = [];
 
@@ -1396,7 +1399,7 @@ function renderExtractionDebugCard(document) {
     missingFields.push('금액');
   }
 
-  const issueList = [...missingFields.map((item) => `${item} 미추출`), ...document.warnings];
+  const issueList = [...missingFields.map((item) => `${item} 미추출`), ...(document.warnings || [])];
   const status = issueList.length ? 'check' : 'ok';
   const statusLabel = status === 'ok' ? '안정' : '확인 필요';
   const amountLabel = document.amount ? `${currencyFormatter.format(document.amount)}원` : '미추출';
@@ -1457,7 +1460,7 @@ function renderEstimateSource() {
   const insurerName = state.policySummary.insurerName || '보험사 미확인';
   const productName = state.policySummary.productName ? ` / ${state.policySummary.productName}` : '';
   const summaryText = hasManualOverrides
-    ? '약관에서 읽은 조건 위에 일부 수동 보정값을 덮어써서 계산했습니다.'
+    ? '약관에서 읽은 조건 위에 일부 수동 보정값을 더해서 계산했습니다.'
     : '약관에서 읽은 자동 추출 조건을 기준으로 계산했습니다.';
 
   return `
@@ -1520,6 +1523,7 @@ function buildDownloadReport() {
 
   return `${baseReport}\n${lines.join('\n')}`;
 }
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -1530,5 +1534,3 @@ function escapeHtml(value) {
 }
 
 loadDemoCase('outpatient-gap');
-
-
