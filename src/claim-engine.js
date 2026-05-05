@@ -287,6 +287,149 @@ export function analyzeClaimReadiness(
   };
 }
 
+export function compareClaimProfiles(rawDocuments, policyAssumptions = createDefaultPolicyAssumptions()) {
+  const documents = rawDocuments.map((document) =>
+    document.normalizedText ? document : buildDocumentRecord(document),
+  );
+  const rankings = CLAIM_PROFILE_OPTIONS.map((profile) => {
+    const analysis = analyzeClaimReadiness(documents, profile.id, policyAssumptions);
+    const missingItems = analysis.checklist.filter((item) => !item.found);
+    const mandatoryMissingItems = missingItems.filter((item) => item.mandatory);
+    const blockerCount = analysis.estimate.blockers.length;
+    const issueCount = analysis.disputeGuide.issues.length;
+    const recommendationScore = computeRecommendationScore({
+      score: analysis.score,
+      verdict: analysis.decision.verdict,
+      digitalEligible: analysis.estimate.digitalEligible,
+      missingCount: missingItems.length,
+      mandatoryMissingCount: mandatoryMissingItems.length,
+      blockerCount,
+      issueCount,
+    });
+    const reasons = buildComparisonReasons({
+      analysis,
+      missingItems,
+      mandatoryMissingItems,
+      blockerCount,
+      issueCount,
+    });
+
+    return {
+      profileId: analysis.profileId,
+      profileLabel: analysis.profileLabel,
+      basisLabel: analysis.basisLabel,
+      referenceDate: analysis.referenceDate,
+      channelTitle: analysis.channelGuide.title,
+      score: analysis.score,
+      recommendationScore,
+      status: analysis.status,
+      decisionLabel: analysis.decision.label,
+      decisionVerdict: analysis.decision.verdict,
+      estimateRangeLabel: analysis.estimate.rangeLabel,
+      digitalEligible: analysis.estimate.digitalEligible,
+      missingCount: missingItems.length,
+      mandatoryMissingCount: mandatoryMissingItems.length,
+      blockerCount,
+      issueCount,
+      reasons,
+      reasonSummary: reasons[0],
+    };
+  }).sort(
+    (left, right) =>
+      right.recommendationScore - left.recommendationScore ||
+      right.score - left.score ||
+      left.mandatoryMissingCount - right.mandatoryMissingCount,
+  );
+  const best = rankings[0] || null;
+
+  return {
+    best,
+    rankings,
+    summary: buildComparisonSummary(best, rankings),
+    disclaimer:
+      '이 비교는 보험상품 가입 추천이 아니라, 현재 업로드한 서류로 앱에 등록된 보험사 안내 기준을 대조한 참고용 청구 준비 비교입니다.',
+  };
+}
+
+function computeRecommendationScore({
+  score,
+  verdict,
+  digitalEligible,
+  missingCount,
+  mandatoryMissingCount,
+  blockerCount,
+  issueCount,
+}) {
+  const optionalMissingCount = Math.max(0, missingCount - mandatoryMissingCount);
+  const verdictPenalty = verdict === 'likely' ? 0 : verdict === 'review' ? 6 : 14;
+  const verdictBonus = verdict === 'likely' ? 4 : 0;
+  const digitalAdjustment = digitalEligible ? 5 : -8;
+  const riskPenalty =
+    mandatoryMissingCount * 5 +
+    optionalMissingCount * 2 +
+    blockerCount * 2 +
+    Math.min(issueCount * 1.5, 6) +
+    verdictPenalty;
+
+  return clamp(Math.round(score + verdictBonus + digitalAdjustment - riskPenalty), 0, 100);
+}
+
+function buildComparisonReasons({ analysis, missingItems, mandatoryMissingItems, blockerCount, issueCount }) {
+  const reasons = [];
+
+  if (mandatoryMissingItems.length) {
+    reasons.push(`필수 보완 서류 ${mandatoryMissingItems.length}건이 있어 바로 접수하면 보완 요청 가능성이 있습니다.`);
+  } else {
+    reasons.push('필수 서류 누락이 없어 접수 준비 부담이 낮습니다.');
+  }
+
+  if (analysis.estimate.digitalEligible) {
+    reasons.push('예상 청구 규모가 디지털 접수 가이드 범위 안에 있습니다.');
+  } else {
+    reasons.push('예상 청구 규모 때문에 우편, 방문, 원본 제출 확인이 필요할 수 있습니다.');
+  }
+
+  if (analysis.decision.verdict === 'likely') {
+    reasons.push('현재 서류 조합 기준 지급 가능성 판정이 높게 잡혔습니다.');
+  } else if (analysis.decision.verdict === 'review') {
+    reasons.push('추가심사 가능성이 있어 접수 전 설명 자료를 보강하는 편이 안전합니다.');
+  } else {
+    reasons.push('현재 상태만으로는 지급 판단이 약해 핵심 서류 보강이 먼저입니다.');
+  }
+
+  if (blockerCount) {
+    reasons.push(`예상 수령액 계산 제한 요인 ${blockerCount}건을 먼저 확인해야 합니다.`);
+  } else {
+    reasons.push('예상 수령액 계산을 막는 큰 제한 요인은 아직 보이지 않습니다.');
+  }
+
+  if (issueCount) {
+    reasons.push(`분쟁 또는 추가심사 쟁점 ${issueCount}건을 염두에 둬야 합니다.`);
+  }
+
+  if (missingItems.length && !mandatoryMissingItems.length) {
+    reasons.push(`선택 보완 서류 ${missingItems.length}건을 준비하면 안정성이 더 올라갑니다.`);
+  }
+
+  reasons.push(`${analysis.channelGuide.title} 접수 흐름을 기준으로 확인합니다.`);
+  return reasons.slice(0, 5);
+}
+
+function buildComparisonSummary(best, rankings) {
+  if (!best) {
+    return '비교할 의료 서류가 아직 없습니다.';
+  }
+
+  const runnerUp = rankings[1];
+  const gap = runnerUp ? best.recommendationScore - runnerUp.recommendationScore : 0;
+
+  if (runnerUp && gap <= 3) {
+    return `${best.profileLabel}: ${best.recommendationScore}점으로 가장 높지만, 다음 순위(${runnerUp.profileLabel})와 차이가 작아 최종 접수 전 누락 서류를 한 번 더 확인해야 합니다.`;
+  }
+
+  return `${best.profileLabel}: ${best.recommendationScore}점으로 가장 높습니다. 현재 업로드한 서류 기준으로 접수 준비 부담이 가장 낮아 보입니다.`;
+}
+
 export function createReportText(analysis, documents) {
   const lines = [
     '[ClaimReady Report]',

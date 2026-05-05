@@ -3,6 +3,7 @@ import {
   CLAIM_PROFILE_OPTIONS,
   analyzeClaimReadiness,
   buildDocumentRecord,
+  compareClaimProfiles,
   createDefaultPolicyAssumptions,
   createReportText,
   resolveClaimProfile,
@@ -24,6 +25,7 @@ const state = {
   responseManualInsurer: 'unknown',
   selectedProfileId: 'samsung-fire',
   analysis: null,
+  comparison: null,
   policySummary: null,
   responseSummary: null,
   policyAutoAssumptions: {},
@@ -562,6 +564,7 @@ async function processMedicalFiles(files) {
   state.error = '';
   state.documents = [];
   state.analysis = null;
+  state.comparison = null;
   state.runLabel = `${files.length}개 의료 문서를 업로드했습니다.`;
   updateProgress('의료 서류를 준비하는 중입니다.', '첫 OCR 언어 로딩 때 몇 초 걸릴 수 있습니다.');
 
@@ -715,6 +718,7 @@ function refreshResponseSummary() {
 function resetAll() {
   state.documents = [];
   state.analysis = null;
+  state.comparison = null;
   state.error = '';
   resetPolicyInputs();
   state.selectedProfileId = 'samsung-fire';
@@ -735,9 +739,14 @@ function resetPolicyInputs() {
 }
 
 function rerunAnalysisIfNeeded() {
-  state.analysis = state.documents.length
-    ? analyzeClaimReadiness(state.documents, state.selectedProfileId, state.policyAssumptions)
-    : null;
+  if (!state.documents.length) {
+    state.analysis = null;
+    state.comparison = null;
+    return;
+  }
+
+  state.analysis = analyzeClaimReadiness(state.documents, state.selectedProfileId, state.policyAssumptions);
+  state.comparison = compareClaimProfiles(state.documents, state.policyAssumptions);
 }
 
 function mountClaimInsurerControls() {
@@ -1161,6 +1170,91 @@ function renderResponseAwareDispute() {
   `;
 }
 
+function renderInsurerComparisonPanel() {
+  const comparison = state.comparison;
+
+  if (!comparison?.rankings?.length || !comparison.best) {
+    return '';
+  }
+
+  const best = comparison.best;
+  const bestReasons = best.reasons
+    .slice(0, 3)
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join('');
+  const rankingCards = comparison.rankings
+    .map((item, index) => {
+      const cardClasses = [
+        'comparison-rank-card',
+        index === 0 ? 'is-best' : '',
+        item.profileId === state.selectedProfileId ? 'is-current' : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      const rankBadge = index === 0 ? '추천' : `${index + 1}위`;
+      const digitalLabel = item.digitalEligible ? '디지털 접수 유리' : '원본/오프라인 확인';
+      const missingLabel = item.mandatoryMissingCount
+        ? `필수 누락 ${item.mandatoryMissingCount}건`
+        : '필수 누락 없음';
+      const currentBadge =
+        item.profileId === state.selectedProfileId ? '<span class="comparison-current">현재 선택</span>' : '';
+
+      return `
+        <article class="${cardClasses}">
+          <div class="comparison-card-head">
+            <span class="comparison-rank">${escapeHtml(rankBadge)}</span>
+            <div>
+              <h5>${escapeHtml(item.profileLabel)}</h5>
+              <p>${escapeHtml(item.channelTitle)}</p>
+            </div>
+            <strong>${item.recommendationScore}</strong>
+          </div>
+          <div class="comparison-meta">
+            ${currentBadge}
+            <span>${escapeHtml(item.status)}</span>
+            <span>${escapeHtml(item.decisionLabel)}</span>
+            <span>${escapeHtml(digitalLabel)}</span>
+            <span>${escapeHtml(missingLabel)}</span>
+          </div>
+          <p class="comparison-reason">${escapeHtml(item.reasonSummary)}</p>
+          <div class="comparison-foot">
+            <span>예상 ${escapeHtml(item.estimateRangeLabel)}</span>
+            <span>준비도 ${item.score}/100</span>
+          </div>
+        </article>
+      `;
+    })
+    .join('');
+
+  return `
+    <section class="result-block comparison-block">
+      <div class="comparison-head">
+        <div>
+          <span class="decision-kicker">보험사 비교</span>
+          <h4>현재 서류 기준 추천 보험사</h4>
+          <p>${escapeHtml(comparison.summary)}</p>
+        </div>
+        <div class="comparison-best-score">
+          <span>추천점수</span>
+          <strong>${best.recommendationScore}</strong>
+        </div>
+      </div>
+
+      <div class="comparison-best">
+        <div>
+          <span class="tag insurer">이번 청구 기준 추천</span>
+          <h5>${escapeHtml(best.profileLabel)}</h5>
+          <p>${escapeHtml(best.basisLabel)} (${escapeHtml(best.referenceDate)} 기준)</p>
+        </div>
+        <ul class="plain-list comparison-reasons">${bestReasons}</ul>
+      </div>
+
+      <div class="comparison-rank-list">${rankingCards}</div>
+      <p class="comparison-disclaimer">${escapeHtml(comparison.disclaimer)}</p>
+    </section>
+  `;
+}
+
 function renderAnalysis(analysis) {
   const adminChecklist = analysis.adminChecklist.length
     ? analysis.adminChecklist.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
@@ -1253,6 +1347,8 @@ function renderAnalysis(analysis) {
         <p>${escapeHtml(analysis.summaryText)}</p>
       </div>
     </div>
+
+    ${renderInsurerComparisonPanel()}
 
     <section class="result-block estimate-block">
       <div class="estimate-head">
@@ -1473,7 +1569,26 @@ function renderEstimateSource() {
 
 function buildDownloadReport() {
   const baseReport = createReportText(state.analysis, state.documents);
-  const lines = ['', '[약관/보험증권 기준]'];
+  const lines = [];
+
+  if (state.comparison?.best) {
+    lines.push('', '[보험사 비교]');
+    lines.push(
+      `- 이번 청구 기준 추천: ${state.comparison.best.profileLabel} (${state.comparison.best.recommendationScore}/100)`,
+    );
+    lines.push(`- 요약: ${state.comparison.summary}`);
+    lines.push(
+      ...state.comparison.rankings
+        .slice(0, 3)
+        .map(
+          (item, index) =>
+            `- ${index + 1}위 ${item.profileLabel}: 추천점수 ${item.recommendationScore}/100, 준비도 ${item.score}/100, ${item.reasonSummary}`,
+        ),
+    );
+    lines.push(`- 주의: ${state.comparison.disclaimer}`);
+  }
+
+  lines.push('', '[약관/보험증권 기준]');
 
   if (!state.policySummary) {
     lines.push('- 약관 문서 없음');
