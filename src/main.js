@@ -18,6 +18,7 @@ const currencyFormatter = new Intl.NumberFormat('ko-KR');
 const app = document.querySelector('#app');
 
 const state = {
+  activePage: 'claim',
   documents: [],
   policyDocuments: [],
   responseDocuments: [],
@@ -70,7 +71,18 @@ app.innerHTML = `
       </div>
     </section>
 
-    <section class="workspace">
+    <nav class="page-tabs" aria-label="ClaimReady 페이지">
+      <button class="page-tab" type="button" data-page="claim">
+        <span>1페이지</span>
+        <strong>서류 · 예상 보험금 찾기</strong>
+      </button>
+      <button class="page-tab" type="button" data-page="comparison">
+        <span>2페이지</span>
+        <strong>보험사 비교</strong>
+      </button>
+    </nav>
+
+    <section class="workspace page-view" id="claim-page">
       <div class="left-column">
         <section class="panel control-panel">
           <div class="section-head">
@@ -296,8 +308,8 @@ app.innerHTML = `
         <section class="panel result-panel">
           <div class="section-head">
             <div>
-              <span class="section-kicker">8. 결과</span>
-              <h2>청구 readiness</h2>
+              <span class="section-kicker">8. 1페이지 결과</span>
+              <h2>필요 서류와 예상 보험금</h2>
             </div>
             <button class="button button-muted" type="button" id="download-button" disabled>리포트 다운로드</button>
           </div>
@@ -307,9 +319,60 @@ app.innerHTML = `
         </section>
       </div>
     </section>
+
+    <section class="workspace page-view comparison-page" id="comparison-page" hidden>
+      <div class="left-column">
+        <section class="panel comparison-intro-panel">
+          <div class="section-head">
+            <div>
+              <span class="section-kicker">2페이지</span>
+              <h2>보험사 비교</h2>
+            </div>
+            <span class="support-chip">청구 기준 추천</span>
+          </div>
+          <p class="page-copy">
+            1페이지에서 올린 의료 서류와 약관 가정값을 그대로 사용해, 현재 등록된 보험사별 청구 준비 부담을 비교합니다.
+            보험상품 가입 추천이 아니라 <strong>이번 청구 접수 관점</strong>의 비교입니다.
+          </p>
+          <div class="cta-row">
+            <button class="button button-strong" type="button" id="comparison-to-claim-button">서류 분석 페이지로 이동</button>
+          </div>
+        </section>
+
+        <section class="panel comparison-input-panel">
+          <div class="section-head">
+            <div>
+              <span class="section-kicker">비교 입력값</span>
+              <h2>현재 비교에 쓰는 자료</h2>
+            </div>
+          </div>
+          <div id="comparison-input-summary" class="comparison-input-summary empty-state">
+            아직 비교할 의료 서류가 없습니다.
+          </div>
+        </section>
+      </div>
+
+      <div class="right-column">
+        <section class="panel result-panel comparison-result-panel">
+          <div class="section-head">
+            <div>
+              <span class="section-kicker">보험사 랭킹</span>
+              <h2>현재 서류 기준 추천</h2>
+            </div>
+            <button class="button button-muted" type="button" id="comparison-download-button" disabled>리포트 다운로드</button>
+          </div>
+          <div id="comparison-root" class="analysis-placeholder">
+            1페이지에서 의료 서류를 올리면 보험사 비교 결과가 여기에 표시됩니다.
+          </div>
+        </section>
+      </div>
+    </section>
   </main>
 `;
 
+const claimPage = document.querySelector('#claim-page');
+const comparisonPage = document.querySelector('#comparison-page');
+const pageTabButtons = document.querySelectorAll('[data-page]');
 const fileInput = document.querySelector('#file-input');
 const policyFileInput = document.querySelector('#policy-file-input');
 const responseFileInput = document.querySelector('#response-file-input');
@@ -326,7 +389,11 @@ const progressPanel = document.querySelector('#progress-panel');
 const progressTitle = document.querySelector('#progress-title');
 const progressDetail = document.querySelector('#progress-detail');
 const analysisRoot = document.querySelector('#analysis-root');
+const comparisonRoot = document.querySelector('#comparison-root');
+const comparisonInputSummary = document.querySelector('#comparison-input-summary');
+const comparisonToClaimButton = document.querySelector('#comparison-to-claim-button');
 const downloadButton = document.querySelector('#download-button');
+const comparisonDownloadButton = document.querySelector('#comparison-download-button');
 const policySourceTitle = document.querySelector('#policy-source-title');
 const policySourcePill = document.querySelector('#policy-source-pill');
 const policySourceNote = document.querySelector('#policy-source-note');
@@ -371,6 +438,20 @@ responseInsurerSelect.value = state.responseManualInsurer;
 responsePasteInput.value = state.responseManualText;
 claimInsurerSelect.value = state.selectedProfileId;
 
+pageTabButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    state.activePage = button.dataset.page === 'comparison' ? 'comparison' : 'claim';
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+comparisonToClaimButton.addEventListener('click', () => {
+  state.activePage = 'claim';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 claimInsurerSelect.addEventListener('change', () => {
   state.selectedProfileId = claimInsurerSelect.value;
   rerunAnalysisIfNeeded();
@@ -413,7 +494,10 @@ policyResetButton.addEventListener('click', () => {
   render();
 });
 
-downloadButton.addEventListener('click', () => {
+downloadButton.addEventListener('click', downloadCurrentReport);
+comparisonDownloadButton.addEventListener('click', downloadCurrentReport);
+
+function downloadCurrentReport() {
   if (!state.analysis) {
     return;
   }
@@ -426,7 +510,7 @@ downloadButton.addEventListener('click', () => {
   anchor.download = `claimready-report-${new Date().toISOString().slice(0, 10)}.txt`;
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 500);
-});
+}
 
 function bindFileInput(input, handler) {
   input.addEventListener('change', async (event) => {
@@ -861,32 +945,93 @@ function renderProgress() {
 
 function render() {
   renderProgress();
+  renderPageNavigation();
   renderMedicalDocuments();
   renderPolicyDocuments();
   renderClaimProfilePicker();
   renderPolicySummary();
   renderResponseDocuments();
   renderResponseSummary();
+  renderComparisonInputSummary();
 
   runLabel.textContent = state.runLabel;
   downloadButton.disabled = !state.analysis;
+  comparisonDownloadButton.disabled = !state.analysis;
 
   if (!state.analysis) {
     analysisRoot.className = 'analysis-placeholder';
     analysisRoot.innerHTML = state.error
       ? `<div class="error-card">${escapeHtml(state.error)}</div>`
       : '의료 서류, 약관, 보험사 회신을 올리면 준비도 분석 결과가 여기에 표시됩니다.';
+    comparisonRoot.className = 'analysis-placeholder';
+    comparisonRoot.innerHTML = state.error
+      ? `<div class="error-card">${escapeHtml(state.error)}</div>`
+      : '1페이지에서 의료 서류를 올리거나 샘플 케이스를 불러오면 보험사 비교 결과가 표시됩니다.';
     return;
   }
 
   analysisRoot.className = 'analysis-root';
   analysisRoot.innerHTML = renderAnalysis(state.analysis);
+  comparisonRoot.className = 'analysis-root comparison-root';
+  comparisonRoot.innerHTML = renderComparisonPage();
+}
+
+function renderPageNavigation() {
+  const isComparisonPage = state.activePage === 'comparison';
+  claimPage.hidden = isComparisonPage;
+  comparisonPage.hidden = !isComparisonPage;
+
+  pageTabButtons.forEach((button) => {
+    const isActive = button.dataset.page === state.activePage;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-current', isActive ? 'page' : 'false');
+  });
 }
 
 function renderClaimProfilePicker() {
   const profile = resolveClaimProfile(state.selectedProfileId);
   claimInsurerSelect.value = profile.id;
   claimInsurerHelp.textContent = `${profile.label} 기준으로 준비도, 제출 채널, 누락 서류 우선순위를 계산합니다. ${profile.referenceDate} 기준 안내를 반영합니다.`;
+}
+
+function renderComparisonInputSummary() {
+  if (!state.documents.length) {
+    comparisonInputSummary.className = 'comparison-input-summary empty-state';
+    comparisonInputSummary.innerHTML = '아직 비교할 의료 서류가 없습니다. 1페이지에서 서류를 올리거나 샘플 케이스를 불러오세요.';
+    return;
+  }
+
+  const documentTypes = state.documents
+    .map((document) => document.typeLabel)
+    .filter((label, index, collection) => collection.indexOf(label) === index)
+    .join(', ');
+  const policySource = state.policySummary
+    ? `${state.policySummary.insurerName || '보험사 미확인'}${state.policySummary.productName ? ` / ${state.policySummary.productName}` : ''}`
+    : '기본 가정값';
+  const responseSource = state.responseSummary
+    ? `${state.responseSummary.insurerName || '보험사 미확인'} 회신 반영`
+    : '보험사 회신 없음';
+
+  comparisonInputSummary.className = 'comparison-input-summary';
+  comparisonInputSummary.innerHTML = `
+    <div class="comparison-input-grid">
+      <article>
+        <span>의료 서류</span>
+        <strong>${state.documents.length}건</strong>
+        <p>${escapeHtml(documentTypes || '문서 유형 미확인')}</p>
+      </article>
+      <article>
+        <span>예상 보험금 기준</span>
+        <strong>${escapeHtml(policySource)}</strong>
+        <p>보상비율 ${Math.round(state.policyAssumptions.coverageRate * 100)}%, 연간 한도 ${formatMoney(state.policyAssumptions.annualLimit)}</p>
+      </article>
+      <article>
+        <span>분쟁/회신 자료</span>
+        <strong>${escapeHtml(responseSource)}</strong>
+        <p>${state.responseSummary ? escapeHtml(state.responseSummary.summary) : '추가서류 요청이나 부지급 통보가 있으면 비교 리스크 판단에 함께 반영합니다.'}</p>
+      </article>
+    </div>
+  `;
 }
 
 function renderMedicalDocuments() {
@@ -1255,6 +1400,28 @@ function renderInsurerComparisonPanel() {
   `;
 }
 
+function renderComparisonPage() {
+  if (!state.comparison?.best) {
+    return `
+      <div class="analysis-placeholder">
+        비교할 의료 서류가 아직 없습니다. 1페이지에서 서류를 올리면 현재 등록 보험사 기준 랭킹을 계산합니다.
+      </div>
+    `;
+  }
+
+  return `
+    ${renderInsurerComparisonPanel()}
+    <section class="result-block comparison-method-block">
+      <h4>비교 기준</h4>
+      <ul class="plain-list">
+        <li>현재 앱에 등록된 보험사: 삼성화재, KB손해보험, DB손해보험, 메리츠화재, 현대해상</li>
+        <li>점수는 준비도, 필수 누락 서류 수, 예상 수령액 제한 요인, 디지털 접수 가능성, 추가심사 쟁점을 합산해 계산합니다.</li>
+        <li>보험상품 자체의 가격, 보장범위, 고객만족도 비교가 아니라 이번 청구 접수 준비 기준 비교입니다.</li>
+      </ul>
+    </section>
+  `;
+}
+
 function renderAnalysis(analysis) {
   const adminChecklist = analysis.adminChecklist.length
     ? analysis.adminChecklist.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
@@ -1347,8 +1514,6 @@ function renderAnalysis(analysis) {
         <p>${escapeHtml(analysis.summaryText)}</p>
       </div>
     </div>
-
-    ${renderInsurerComparisonPanel()}
 
     <section class="result-block estimate-block">
       <div class="estimate-head">

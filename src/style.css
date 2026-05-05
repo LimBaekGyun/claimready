@@ -141,12 +141,58 @@ button {
   margin-bottom: 8px;
 }
 
+.page-tabs {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.page-tab {
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 22px;
+  padding: 18px 20px;
+  background: rgba(255, 252, 246, 0.68);
+  color: var(--ink);
+  text-align: left;
+  box-shadow: 0 16px 36px rgba(56, 53, 42, 0.08);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.page-tab:hover {
+  transform: translateY(-2px);
+}
+
+.page-tab span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+}
+
+.page-tab strong {
+  display: block;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.05rem;
+}
+
+.page-tab.is-active {
+  border-color: rgba(15, 122, 97, 0.28);
+  background:
+    linear-gradient(135deg, rgba(15, 122, 97, 0.12), rgba(255, 252, 246, 0.78)),
+    rgba(255, 252, 246, 0.82);
+}
+
 .workspace {
   margin-top: 22px;
   display: grid;
   grid-template-columns: 1.08fr 0.92fr;
   gap: 22px;
   align-items: start;
+}
+
+.page-view[hidden] {
+  display: none;
 }
 
 .left-column,
@@ -160,7 +206,9 @@ button {
 .response-panel,
 .docs-panel,
 .result-panel,
-.progress-panel {
+.progress-panel,
+.comparison-intro-panel,
+.comparison-input-panel {
   border-radius: 26px;
   padding: 28px;
 }
@@ -700,6 +748,53 @@ button {
   line-height: 1.65;
 }
 
+.page-copy {
+  margin: 18px 0 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.page-copy strong {
+  color: var(--ink);
+}
+
+.comparison-input-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.comparison-input-grid article {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid var(--line);
+}
+
+.comparison-input-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.comparison-input-grid strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink);
+  font-family: 'Sora', sans-serif;
+  line-height: 1.4;
+}
+
+.comparison-input-grid p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.92rem;
+}
+
+.comparison-root .comparison-block {
+  margin-top: 0;
+}
+
 .comparison-block {
   margin-top: 22px;
   background:
@@ -852,6 +947,10 @@ button {
 
 .comparison-disclaimer {
   font-size: 0.86rem;
+}
+
+.comparison-method-block {
+  margin-top: 16px;
 }
 
 .compact-grid {
@@ -1224,6 +1323,10 @@ button {
   }
 
   .helper-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-tabs {
     grid-template-columns: 1fr;
   }
 
