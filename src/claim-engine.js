@@ -1,4 +1,8 @@
 const currencyFormatter = new Intl.NumberFormat('ko-KR');
+const CLAIM_SOURCE_VERIFIED_DATE = '2026-05-19';
+const CLAIM_SOURCE_REVIEW_INTERVAL_DAYS = 90;
+const SOURCE_REVIEW_WARNING_DAYS = 14;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const DOCUMENT_TYPE_LABELS = {
   hospitalReceipt: '진료비 영수증',
@@ -18,7 +22,24 @@ const CLAIM_PROFILES = [
     label: '삼성화재',
     aliases: ['samsung-fire', 'samsung', '삼성화재', '삼성화재해상보험'],
     basisLabel: '삼성화재 질병/상해 보험금청구 안내 기준',
-    referenceDate: '2026-04-19',
+    referenceDate: CLAIM_SOURCE_VERIFIED_DATE,
+    source: defineOfficialSource([
+      {
+        label: '질병/상해 보험금청구',
+        url: 'https://www.samsungfire.com/claim/P_P03_01_01_001.html',
+      },
+      {
+        label: '질병/상해 보험금청구 필요서류',
+        url: 'https://direct.samsungfire.com/m/claim/MP040202_001.html?tab=1',
+      },
+      {
+        label: '질병/상해 보험금 청구 채널',
+        url: 'https://direct.samsungfire.com/claim/PP040201_001.html?pcMode=true',
+      },
+    ], [
+      '공식 청구 페이지에서 PC/모바일, 우편/방문 접수 흐름을 확인했습니다.',
+      '다이렉트 안내의 200만원 초과 원본 제출 문구를 보수적 디지털 한도로 유지했습니다.',
+    ]),
     channelGuide: {
       title: '모바일·홈페이지 우선',
       detail: '질병·상해 보험금청구 기준으로 모바일/홈페이지 채널을 우선 안내합니다.',
@@ -46,12 +67,30 @@ const CLAIM_PROFILES = [
     label: 'KB손해보험',
     aliases: ['kb-insure', 'kb', 'kb손해보험', 'lig손해보험'],
     basisLabel: 'KB손해보험 보험금청구 안내 기준',
-    referenceDate: '2026-04-19',
+    referenceDate: CLAIM_SOURCE_VERIFIED_DATE,
+    source: defineOfficialSource([
+      {
+        label: '보험금청구안내',
+        url: 'https://www.kbinsure.co.kr/CG205010001.ec',
+      },
+      {
+        label: '필요서류 안내(질병)',
+        url: 'https://www.kbinsure.co.kr/CG205020003.ec',
+      },
+      {
+        label: '필요서류 안내(일반상해)',
+        url: 'https://www.kbinsure.co.kr/pop/CG205020001.ec',
+      },
+    ], [
+      '실손 통원 3만원 초과 10만원 이하 처방전 대체 기준과 비급여 세부내역서 예외를 확인했습니다.',
+      '5천만원 이상, 사망보험금, 위임 청구는 우편/방문 원본 제출 필요 문구를 반영했습니다.',
+    ]),
     channelGuide: {
       title: '앱·홈페이지·우편 병행',
       detail: '앱/홈페이지 접수를 우선 보되 우편·방문·FAX 채널도 함께 염두에 둡니다.',
     },
     rules: {
+      mobileLimit: 50000000,
       claimWindowYears: 3,
       outpatientDiagnosisThreshold: 30000,
       outpatientDetailThreshold: 100000,
@@ -74,12 +113,30 @@ const CLAIM_PROFILES = [
     label: 'DB손해보험',
     aliases: ['db-insure', 'db', 'db손해보험', '동부화재'],
     basisLabel: 'DB손해보험 상해·질병 보험금청구 안내 기준',
-    referenceDate: '2026-04-19',
+    referenceDate: CLAIM_SOURCE_VERIFIED_DATE,
+    source: defineOfficialSource([
+      {
+        label: '상해/질병 보험금청구',
+        url: 'https://idbins.com/FMCLAV1039.do',
+      },
+      {
+        label: '필요서류안내',
+        url: 'https://www.idbins.com/mo/bizxpress/ct/dc/FMCUSV1216.shtm',
+      },
+      {
+        label: '보험금 청구 유의사항',
+        url: 'https://www.idbins.com/pc/bizxpress/ask/ia/FWCLAV1123.shtm',
+      },
+    ], [
+      '모바일 청구 100만원 이하, 홈페이지 청구 500만원 이하 안내를 확인해 디지털 한도는 홈페이지 기준으로 잡았습니다.',
+      '3만원 초과 통원의료비 진단명 포함 서류와 비급여 세부내역서 예외를 확인했습니다.',
+    ]),
     channelGuide: {
       title: '홈페이지·모바일 앱 우선',
       detail: '회원은 홈페이지/모바일, 비회원은 이메일·FAX 보완 가능성을 함께 안내합니다.',
     },
     rules: {
+      mobileLimit: 5000000,
       claimWindowYears: 3,
       outpatientDiagnosisThreshold: 30000,
       outpatientDetailThreshold: 100000,
@@ -101,7 +158,24 @@ const CLAIM_PROFILES = [
     label: '메리츠화재',
     aliases: ['meritz-fire', 'meritz', '메리츠화재', '메리츠화재해상보험'],
     basisLabel: '메리츠화재 보험금 청구 서류 안내 기준',
-    referenceDate: '2026-04-19',
+    referenceDate: CLAIM_SOURCE_VERIFIED_DATE,
+    source: defineOfficialSource([
+      {
+        label: '보상/보험금청구',
+        url: 'https://www.meritzfire.com/compensation.do',
+      },
+      {
+        label: '보험금청구서류 접수방법',
+        url: 'https://cmdown.meritzfire.com/manager/cm/document/supply.pdf',
+      },
+      {
+        label: '보험금청구서',
+        url: 'https://cmdown.meritzfire.com/manager/cm/document/meritzfire_claim_form.pdf',
+      },
+    ], [
+      'FAX, 홈페이지, 모바일앱 접수는 청구금액 100만원 이하 건 기준이라는 안내를 확인했습니다.',
+      '개인정보 처리·의료심사 동의 거부 시 지급 지연 또는 불가 문구를 확인했습니다.',
+    ]),
     channelGuide: {
       title: '홈페이지·모바일·FAX 병행',
       detail: '소액은 홈페이지/앱/FAX, 그 외에는 우편 원본 제출 가능성을 같이 봅니다.',
@@ -128,12 +202,26 @@ const CLAIM_PROFILES = [
     label: '현대해상',
     aliases: ['hyundai-marine', 'hyundai', 'hi', '현대해상', '현대해상화재보험'],
     basisLabel: '현대해상 보험금 청구 절차 안내 기준',
-    referenceDate: '2026-04-19',
+    referenceDate: CLAIM_SOURCE_VERIFIED_DATE,
+    source: defineOfficialSource([
+      {
+        label: '보험금청구 필요서류',
+        url: 'https://www.hi.co.kr/serviceAction.do?menuId=100631',
+      },
+      {
+        label: '보험금청구서류 안내장',
+        url: 'https://www.hi.co.kr/FileActionServlet/preview/1/data/202409/be11216a9ad3015a1614c313610d5200.pdf/%EB%B3%B4%ED%97%98%EA%B8%88%EC%B2%AD%EA%B5%AC%EC%84%9C%28%EA%B8%B0%EB%B3%B8%29_%EC%88%98%EC%A0%95%EB%B3%B8.pdf',
+      },
+    ], [
+      '실손의료비 공통서류, 입원/통원 서류, 비급여 세부내역서 필수 문구를 확인했습니다.',
+      '청구금액 1,000만원 초과 시 우편/방문 원본서류 필요 문구를 확인했습니다.',
+    ]),
     channelGuide: {
       title: '홈페이지·모바일 앱·우편',
       detail: '홈페이지/앱 접수와 우편 접수를 같이 열어두고 담당자 지정 여부를 확인합니다.',
     },
     rules: {
+      mobileLimit: 10000000,
       claimWindowYears: 3,
       outpatientDiagnosisThreshold: 30000,
       outpatientDetailThreshold: 100000,
@@ -231,6 +319,7 @@ export function analyzeClaimReadiness(
   policyAssumptions = createDefaultPolicyAssumptions(),
 ) {
   const profile = resolveClaimProfile(profileIdOrName);
+  const source = buildSourceSnapshot(profile.source);
   const assumptions = { ...createDefaultPolicyAssumptions(), ...policyAssumptions };
   const documents = rawDocuments.map((document) =>
     document.normalizedText ? document : buildDocumentRecord(document),
@@ -265,6 +354,7 @@ export function analyzeClaimReadiness(
     profileLabel: profile.label,
     basisLabel: profile.basisLabel,
     referenceDate: profile.referenceDate,
+    source,
     claimType,
     claimTypeLabel,
     channelGuide: buildChannelGuide(estimate, profile),
@@ -319,6 +409,10 @@ export function compareClaimProfiles(rawDocuments, policyAssumptions = createDef
       profileLabel: analysis.profileLabel,
       basisLabel: analysis.basisLabel,
       referenceDate: analysis.referenceDate,
+      source: analysis.source,
+      sourceStatusLabel: analysis.source.statusLabel,
+      sourceVerifiedDate: analysis.source.verifiedDate,
+      sourceNextReviewDate: analysis.source.nextReviewDate,
       channelTitle: analysis.channelGuide.title,
       score: analysis.score,
       recommendationScore,
@@ -436,6 +530,13 @@ export function createReportText(analysis, documents) {
     `- 기준 보험사: ${analysis.profileLabel}`,
     `- 기준 안내: ${analysis.basisLabel}`,
     `- 기준일: ${analysis.referenceDate}`,
+    `- 공식 출처 확인일: ${analysis.source.verifiedDate || '미확인'}`,
+    `- 다음 출처 검토일: ${analysis.source.nextReviewDate || '미정'} (${analysis.source.statusLabel || '출처 미확인'})`,
+    `- 공식 출처: ${
+      analysis.source.sources.length
+        ? analysis.source.sources.map((source) => `${source.label} ${source.url}`).join(' / ')
+        : '미등록'
+    }`,
     `- 청구 유형: ${analysis.claimTypeLabel}`,
     `- 준비도 점수: ${analysis.score}/100`,
     `- 판단: ${analysis.decision.label}`,
@@ -473,6 +574,61 @@ const CLAIM_TYPE_LABELS = {
   unknown: '청구 유형 미확정',
 };
 
+function defineOfficialSource(sources, notes = []) {
+  return {
+    verifiedDate: CLAIM_SOURCE_VERIFIED_DATE,
+    nextReviewDate: formatIsoDate(addDays(parseIsoDate(CLAIM_SOURCE_VERIFIED_DATE), CLAIM_SOURCE_REVIEW_INTERVAL_DAYS)),
+    reviewIntervalDays: CLAIM_SOURCE_REVIEW_INTERVAL_DAYS,
+    sources,
+    notes,
+  };
+}
+
+function buildSourceSnapshot(source) {
+  if (!source) {
+    return {
+      verifiedDate: '',
+      nextReviewDate: '',
+      reviewIntervalDays: 0,
+      status: 'unknown',
+      statusLabel: '출처 미확인',
+      daysUntilReview: null,
+      sources: [],
+      notes: [],
+    };
+  }
+
+  const nextReviewDate = parseIsoDate(source.nextReviewDate);
+  const today = startOfUtcDate(new Date());
+  const daysUntilReview = nextReviewDate
+    ? Math.ceil((nextReviewDate.getTime() - today.getTime()) / MS_PER_DAY)
+    : null;
+  const status =
+    daysUntilReview === null
+      ? 'unknown'
+      : daysUntilReview < 0
+        ? 'stale'
+        : daysUntilReview <= SOURCE_REVIEW_WARNING_DAYS
+          ? 'due-soon'
+          : 'fresh';
+
+  return {
+    verifiedDate: source.verifiedDate,
+    nextReviewDate: source.nextReviewDate,
+    reviewIntervalDays: source.reviewIntervalDays,
+    status,
+    statusLabel: {
+      fresh: '최신 확인됨',
+      'due-soon': '검토 예정 임박',
+      stale: '재확인 필요',
+      unknown: '출처 미확인',
+    }[status],
+    daysUntilReview,
+    sources: (source.sources || []).map((item) => ({ ...item })),
+    notes: [...(source.notes || [])],
+  };
+}
+
 function cloneProfile(profile) {
   return {
     ...profile,
@@ -481,6 +637,11 @@ function cloneProfile(profile) {
     rules: { ...profile.rules },
     adminChecklist: [...profile.adminChecklist],
     officialNotes: [...profile.officialNotes],
+    source: {
+      ...profile.source,
+      sources: (profile.source?.sources || []).map((item) => ({ ...item })),
+      notes: [...(profile.source?.notes || [])],
+    },
   };
 }
 
@@ -1179,7 +1340,7 @@ function buildDisputeGuide(summary, checklist, estimate, profile) {
   const steps = [
     '보험사에 부지급·감액 사유와 적용 약관 조항을 서면으로 요청합니다.',
     '보완 요청이 오면 요청한 문구와 현재 가진 서류를 1:1로 매칭해 누락 여부를 다시 확인합니다.',
-    '같은 쟁점이 반복되면 1372 상담, 한국소비자원 피해구제, 금융감독원 분쟁조정 순으로 escalte 합니다.',
+    '같은 쟁점이 반복되면 1372 상담, 한국소비자원 피해구제, 금융감독원 분쟁조정 순으로 escalate 합니다.',
   ];
 
   checklist
@@ -1280,6 +1441,40 @@ function buildChannelGuide(estimate, profile) {
 
 function formatMoney(value) {
   return `${currencyFormatter.format(Math.max(0, Math.round(value || 0)))}원`;
+}
+
+function parseIsoDate(value) {
+  const [year, month, day] = String(value || '')
+    .split('-')
+    .map((part) => Number.parseInt(part, 10));
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function addDays(date, days) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const nextDate = new Date(date);
+  nextDate.setUTCDate(nextDate.getUTCDate() + days);
+  return nextDate;
+}
+
+function formatIsoDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function startOfUtcDate(date) {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 }
 
 function dedupeText(items) {

@@ -991,7 +991,7 @@ function renderPageNavigation() {
 function renderClaimProfilePicker() {
   const profile = resolveClaimProfile(state.selectedProfileId);
   claimInsurerSelect.value = profile.id;
-  claimInsurerHelp.textContent = `${profile.label} 기준으로 준비도, 제출 채널, 누락 서류 우선순위를 계산합니다. ${profile.referenceDate} 기준 안내를 반영합니다.`;
+  claimInsurerHelp.textContent = `${profile.label} 기준으로 준비도, 제출 채널, 누락 서류 우선순위를 계산합니다. 공식 출처 ${profile.source.verifiedDate} 확인, 다음 검토 ${profile.source.nextReviewDate} 기준입니다.`;
 }
 
 function renderComparisonInputSummary() {
@@ -1360,6 +1360,7 @@ function renderInsurerComparisonPanel() {
             <span>${escapeHtml(item.decisionLabel)}</span>
             <span>${escapeHtml(digitalLabel)}</span>
             <span>${escapeHtml(missingLabel)}</span>
+            <span>${escapeHtml(item.sourceStatusLabel)}</span>
           </div>
           <p class="comparison-reason">${escapeHtml(item.reasonSummary)}</p>
           <div class="comparison-foot">
@@ -1389,7 +1390,7 @@ function renderInsurerComparisonPanel() {
         <div>
           <span class="tag insurer">이번 청구 기준 추천</span>
           <h5>${escapeHtml(best.profileLabel)}</h5>
-          <p>${escapeHtml(best.basisLabel)} (${escapeHtml(best.referenceDate)} 기준)</p>
+          <p>${escapeHtml(best.basisLabel)} (${escapeHtml(best.sourceVerifiedDate)} 공식 출처 확인 · 다음 검토 ${escapeHtml(best.sourceNextReviewDate)})</p>
         </div>
         <ul class="plain-list comparison-reasons">${bestReasons}</ul>
       </div>
@@ -1416,10 +1417,71 @@ function renderComparisonPage() {
       <ul class="plain-list">
         <li>현재 앱에 등록된 보험사: 삼성화재, KB손해보험, DB손해보험, 메리츠화재, 현대해상</li>
         <li>점수는 준비도, 필수 누락 서류 수, 예상 수령액 제한 요인, 디지털 접수 가능성, 추가심사 쟁점을 합산해 계산합니다.</li>
+        <li>공식 출처는 보험사별 안내 페이지와 청구서/PDF를 기준으로 90일마다 재확인하도록 표시합니다.</li>
         <li>보험상품 자체의 가격, 보장범위, 고객만족도 비교가 아니라 이번 청구 접수 준비 기준 비교입니다.</li>
       </ul>
     </section>
   `;
+}
+
+function renderSourceFreshness(source) {
+  if (!source) {
+    return '';
+  }
+
+  const sourceLinks = source.sources.length
+    ? source.sources
+        .map(
+          (item) => `
+            <li>
+              <a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.label)}</a>
+            </li>
+          `,
+        )
+        .join('')
+    : '<li>등록된 공식 출처가 없습니다.</li>';
+  const sourceNotes = source.notes.length
+    ? source.notes.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
+    : '<li>추가 검증 메모가 없습니다.</li>';
+
+  return `
+    <section class="source-freshness source-${escapeHtml(source.status)}">
+      <div class="source-head">
+        <div>
+          <span class="decision-kicker">공식 출처 최신성</span>
+          <h4>${escapeHtml(source.statusLabel)}</h4>
+          <p>확인일 ${escapeHtml(source.verifiedDate || '미확인')} · 다음 검토 ${escapeHtml(source.nextReviewDate || '미정')} · ${escapeHtml(buildSourceReviewDistanceLabel(source))}</p>
+        </div>
+        <span class="source-status status-${escapeHtml(source.status)}">${escapeHtml(source.statusLabel)}</span>
+      </div>
+      <div class="source-grid">
+        <div>
+          <strong>확인한 공식 출처</strong>
+          <ul class="source-links">${sourceLinks}</ul>
+        </div>
+        <div>
+          <strong>반영 메모</strong>
+          <ul class="plain-list">${sourceNotes}</ul>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function buildSourceReviewDistanceLabel(source) {
+  if (typeof source.daysUntilReview !== 'number') {
+    return '검토 주기 미설정';
+  }
+
+  if (source.daysUntilReview < 0) {
+    return `${Math.abs(source.daysUntilReview)}일 전 검토 기한 경과`;
+  }
+
+  if (source.daysUntilReview === 0) {
+    return '오늘 재검토 필요';
+  }
+
+  return `${source.daysUntilReview}일 후 재검토`;
 }
 
 function renderAnalysis(analysis) {
@@ -1484,13 +1546,15 @@ function renderAnalysis(analysis) {
     <div class="analysis-banner">
       <div>
         <span class="tag insurer">${escapeHtml(analysis.profileLabel)}</span>
-        <p class="banner-text">${escapeHtml(analysis.basisLabel)} (${escapeHtml(analysis.referenceDate)} 기준)</p>
+        <p class="banner-text">${escapeHtml(analysis.basisLabel)} (${escapeHtml(analysis.source.verifiedDate)} 공식 출처 확인)</p>
       </div>
       <div class="banner-side">
         <strong>${escapeHtml(analysis.channelGuide.title)}</strong>
         <p>${escapeHtml(analysis.channelGuide.detail)}</p>
       </div>
     </div>
+
+    ${renderSourceFreshness(analysis.source)}
 
     <div class="decision-strip verdict-${analysis.decision.verdict}">
       <div>
@@ -1747,7 +1811,7 @@ function buildDownloadReport() {
         .slice(0, 3)
         .map(
           (item, index) =>
-            `- ${index + 1}위 ${item.profileLabel}: 추천점수 ${item.recommendationScore}/100, 준비도 ${item.score}/100, ${item.reasonSummary}`,
+            `- ${index + 1}위 ${item.profileLabel}: 추천점수 ${item.recommendationScore}/100, 준비도 ${item.score}/100, 출처 ${item.sourceVerifiedDate} 확인(${item.sourceStatusLabel}), ${item.reasonSummary}`,
         ),
     );
     lines.push(`- 주의: ${state.comparison.disclaimer}`);

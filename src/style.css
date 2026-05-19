@@ -632,6 +632,100 @@ button {
   font-size: 0.95rem;
 }
 
+.source-freshness {
+  margin-bottom: 20px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--line);
+}
+
+.source-freshness.source-stale {
+  border-color: rgba(161, 61, 45, 0.32);
+  background: rgba(255, 244, 239, 0.72);
+}
+
+.source-freshness.source-due-soon {
+  border-color: rgba(200, 110, 49, 0.32);
+  background: rgba(255, 248, 238, 0.72);
+}
+
+.source-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.source-head h4 {
+  margin: 10px 0 0;
+  color: var(--ink);
+  font-family: 'Sora', sans-serif;
+}
+
+.source-head p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.source-status {
+  display: inline-flex;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  background: rgba(15, 122, 97, 0.12);
+  color: var(--accent);
+}
+
+.source-status.status-due-soon {
+  background: rgba(200, 110, 49, 0.14);
+  color: var(--accent-warm);
+}
+
+.source-status.status-stale,
+.source-status.status-unknown {
+  background: rgba(161, 61, 45, 0.12);
+  color: var(--warning);
+}
+
+.source-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.source-grid > div {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.source-grid strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.source-links {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.source-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.source-links a:hover {
+  text-decoration: underline;
+}
+
 .decision-strip {
   display: flex;
   justify-content: space-between;
@@ -1275,6 +1369,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .source-grid {
+    grid-template-columns: 1fr;
+  }
+
   .comparison-best {
     grid-template-columns: 1fr;
   }
@@ -1335,6 +1433,7 @@ button {
   }
 
   .comparison-head,
+  .source-head,
   .comparison-card-head,
   .comparison-foot {
     display: flex;
